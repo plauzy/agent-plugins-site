@@ -46,3 +46,17 @@ Apply the narrowest relevant boundary:
 3. Skip one skill when its `SKILL.md` escapes the root.
 4. Skip one MCP entry when a configured package path escapes its permitted root.
 5. Deny access for other escaping package paths.
+
+## Field notes: measured client behavior
+
+Implementers migrating an existing plugin system toward these portable locations can compare against measured behavior from the ecosystem. Against a conforming 1.0.0 package, Claude Code 2.1.226 behaves as follows:
+
+| Surface | Measured behavior |
+| --- | --- |
+| `skills/` discovery | Works on the untouched portable layout (immediate children containing `SKILL.md`) |
+| Package identity | Read only from `.claude-plugin/plugin.json`; the portable root `plugin.json` is not consulted. Marketplace installs tolerate its absence, strict validation does not |
+| MCP servers | Read only from a root `.mcp.json`; the portable `mcp.json` is not consulted, though its `mcpServers` shape is accepted as-is |
+
+Authors bridge gaps like this today with generated overlay files that mirror portable data (see the example repository's migration references). For a client adding Agent Plugins support, the better end state is reading the portable locations directly — overlays should be transitional, not permanent.
+
+One discovery subtlety surfaced by the same adoption work: a client that delegates skill discovery to another program's glob expansion inherits that program's `**` semantics for directory symlinks, which differ between common implementations. If your discovery path involves delegated globs, verify it against a package whose skill directories are symlinks, and prefer single-level patterns where the layout guarantees one level.
